@@ -24,16 +24,50 @@
         hotkeys: [],
         isInitialized: false,
         storageKey: 'hotkeyManagerConfig',
+        themeKey: 'hotkeyManagerTheme',
+        theme: 'light', // 默认使用深色主题
 
         init: function() {
             if (this.isInitialized) return;
             this.loadHotkeys();
+            this.loadThemePreference();
             document.addEventListener('keydown', this.handleKeyDown.bind(this), true); // Use capturing phase
             this.isInitialized = true;
             console.log('%cHotkeyManager v2.0 initialized successfully!', 'color: #4CAF50; font-weight: bold;');
             console.log('Call `HotkeyManager.showDashboard()` to open the management panel.');
             this.injectCSS();
             this.createDashboard();
+        },
+        
+        loadThemePreference: function() {
+            try {
+                const storedTheme = localStorage.getItem(this.themeKey + window.location.hostname);
+                if (storedTheme) {
+                    this.theme = storedTheme;
+                }
+            } catch (e) {
+                console.error("Failed to load theme preference from localStorage:", e);
+            }
+        },
+        
+        saveThemePreference: function() {
+            try {
+                localStorage.setItem(this.themeKey + window.location.hostname, this.theme);
+            } catch (e) {
+                console.error("Failed to save theme preference to localStorage:", e);
+            }
+        },
+        
+        toggleTheme: function() {
+            this.theme = this.theme === 'dark' ? 'light' : 'dark';
+            this.saveThemePreference();
+            this.applyTheme();
+        },
+        
+        applyTheme: function() {
+            if (this.dashboard) {
+                this.dashboard.setAttribute('data-theme', this.theme);
+            }
         },
         
         loadHotkeys: function() {
@@ -171,12 +205,15 @@
             const style = document.createElement('style');
             style.id = 'hk-manager-styles';
             style.innerHTML = `
+                /* 深色主题（默认） */
                 #hk-manager-dashboard { position: fixed; top: 20px; right: 20px; width: 420px; background: #2c2c2c; color: #f0f0f0; border: 1px solid #555; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; display: none; flex-direction: column; max-height: 90vh; }
                 #hk-manager-dashboard.hk-minimized { height: 38px; width: 200px; overflow: hidden; }
                 #hk-header { background: #3a3a3a; padding: 8px 12px; border-bottom: 1px solid #555; cursor: move; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
                 #hk-header h3 { margin: 0; font-size: 16px; user-select: none; color: #fff; }
                 #hk-controls button { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 2px 5px;}
                 #hk-controls button:hover { color: #fff; }
+                #hk-theme-toggle { background: none; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 2px 5px; margin-right: 5px; }
+                #hk-theme-toggle:hover { color: #fff; }
                 #hk-content { padding: 15px; overflow-y: auto; }
                 #hk-list { list-style: none; padding: 0; margin-bottom: 15px; border-top: 1px solid #444; }
                 #hk-list li { background: #383838; padding: 10px; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
@@ -191,6 +228,27 @@
                 #hk-custom-action-group { display: none; }
                 #hk-form-submit { width: 100%; background: #4CAF50; color: white; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
                 #hk-form-submit:hover { background: #45a049; }
+                
+                /* 亮色主题 */
+                #hk-manager-dashboard[data-theme="light"] { background: #ffffff; color: #333333; border: 1px solid #dddddd; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+                #hk-manager-dashboard[data-theme="light"] #hk-header { background: #f4f4f4; border-bottom: 1px solid #dddddd; }
+                #hk-manager-dashboard[data-theme="light"] #hk-header h3 { color: #333333; }
+                #hk-manager-dashboard[data-theme="light"] #hk-controls button { color: #666666; }
+                #hk-manager-dashboard[data-theme="light"] #hk-controls button:hover { color: #333333; }
+                #hk-manager-dashboard[data-theme="light"] #hk-theme-toggle { color: #666666; }
+                #hk-manager-dashboard[data-theme="light"] #hk-theme-toggle:hover { color: #333333; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list { border-top: 1px solid #dddddd; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list li { background: #f4f4f4; border-bottom: 1px solid #dddddd; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list li .keys { color: #0066cc; background: #e8f4ff; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list li .desc { color: #333333; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list li .actions button { background: #e0e0e0; color: #333333; }
+                #hk-manager-dashboard[data-theme="light"] #hk-list li .actions button:hover { background: #d0d0d0; }
+                #hk-manager-dashboard[data-theme="light"] .hk-form-group label { color: #555555; }
+                #hk-manager-dashboard[data-theme="light"] .hk-form-group input, 
+                #hk-manager-dashboard[data-theme="light"] .hk-form-group select, 
+                #hk-manager-dashboard[data-theme="light"] .hk-form-group textarea { 
+                    background: #f4f4f4; color: #333333; border: 1px solid #cccccc; 
+                }
             `;
             document.head.appendChild(style);
         },
@@ -200,10 +258,12 @@
             
             this.dashboard = document.createElement('div');
             this.dashboard.id = 'hk-manager-dashboard';
+            this.dashboard.setAttribute('data-theme', this.theme);
             this.dashboard.innerHTML = `
                 <div id="hk-header">
                     <h3>Hotkey Manager</h3>
                     <div id="hk-controls">
+                        <button id="hk-theme-toggle" title="切换主题">🌓</button>
                         <button id="hk-minimize-btn" title="Minimize">－</button>
                         <button id="hk-close-btn" title="Close">×</button>
                     </div>
@@ -258,6 +318,7 @@
         
         showDashboard: function() {
             if (!this.dashboard) this.createDashboard();
+            this.applyTheme();
             this.dashboard.style.display = 'flex';
         },
 
@@ -265,6 +326,9 @@
             document.getElementById('hk-close-btn').addEventListener('click', () => this.dashboard.style.display = 'none');
             document.getElementById('hk-minimize-btn').addEventListener('click', () => {
                 this.dashboard.classList.toggle('hk-minimized');
+            });
+            document.getElementById('hk-theme-toggle').addEventListener('click', () => {
+                this.toggleTheme();
             });
             
             const form = document.getElementById('hk-add-form');
@@ -415,3 +479,7 @@
     // window.HotkeyManager.showDashboard();
 
 })(window);
+
+
+
+
