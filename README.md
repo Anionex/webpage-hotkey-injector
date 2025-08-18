@@ -4,6 +4,8 @@
 
 1. **热键管理系统**：允许用户为网页创建自定义快捷键，并将这些配置保存到浏览器的本地存储中。
 
+2. **元素HTML查看器**：通过Alt+Q快捷键，可以获取上次点击元素的完整HTML代码和CSS选择器路径，方便网页分析和调试。
+
 3. **可视化面板**：提供了一个用户友好的仪表盘界面，用户可以通过它来添加、编辑和删除热键配置。
 
 4. **多种操作类型**：
@@ -26,9 +28,9 @@
 
 ### 直接引入
 - 打开f12开发者选项，将js内容粘贴到console中回车执行。
-- 或将`wepageHotkeysInjector.js`文件添加到您的页面中：
+- 或将`wepageHotkeysInjector.user.js`文件添加到您的页面中：
 ```html
-<script src="wepageHotkeysInjector.js"></script>
+<script src="wepageHotkeysInjector.user.js"></script>
 ```
 
 ### 油猴脚本
@@ -40,6 +42,7 @@
 - 使用 `Ctrl+Shift+Alt+H` 组合键打开/关闭热键管理面板
 - 在管理面板中，您可以添加、编辑和删除热键配置
 - 也可以通过控制台运行 `HotkeyManager.showDashboard()` 来打开面板
+- 使用 `Alt+Q` 获取上次点击元素的HTML代码和CSS选择器（适合快速定位元素，无需查看源码）
 
 ### 效果概览
 <img width="2782" height="1395" alt="image" src="https://github.com/user-attachments/assets/f19eeee4-5137-402b-99f3-ff19f7cf4029" />
